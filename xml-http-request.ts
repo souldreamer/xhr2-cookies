@@ -4,7 +4,7 @@ import * as os from 'os';
 import * as url from 'url';
 import { ProgressEvent } from './progress-event';
 import { InvalidStateError, NetworkError, SecurityError, SyntaxError } from './errors';
-import { XMLHttpRequestEventTarget } from './xml-http-request-event-target';
+import { ProgressEventListener, XMLHttpRequestEventTarget } from './xml-http-request-event-target';
 import { XMLHttpRequestUpload } from './xml-http-request-upload';
 import { Url } from 'url';
 import { Agent as HttpAgent, ClientRequest, IncomingMessage, RequestOptions as RequestOptionsHttp } from 'http';
@@ -32,7 +32,7 @@ export class XMLHttpRequest extends XMLHttpRequestEventTarget {
 	static LOADING = 3;
 	static DONE = 4;
 	
-	onreadystatechange: ProgressEvent | null = null;
+	onreadystatechange: ProgressEventListener | null = null;
 	readyState: number = XMLHttpRequest.UNSENT;
 	
 	response: string | ArrayBuffer | Buffer | object | null = null;
@@ -231,6 +231,16 @@ export class XMLHttpRequest extends XMLHttpRequestEventTarget {
 	}
 	
 	private _sendHxxpRequest() {
+		if (this.withCredentials) {
+			this._cookieJar = this._cookieJar || Cookie.CookieJar();
+			const cookie = this._cookieJar
+				.getCookies(
+					Cookie.CookieAccessInfo(this._url.hostname, this._url.pathname, this._url.protocol === 'https:')
+				).toValueString();
+			
+			this._headers.cookie = this._headers.cookie2 = cookie;
+		}
+		
 		const [hxxp, agent] = this._url.protocol === 'http:' ? [http, this.nodejsHttpAgent] : [https, this.nodejsHttpsAgent];
 		const requestMethod: (options: RequestOptionsHttp) => ClientRequest = hxxp.request.bind(hxxp);
 		const request = requestMethod({
@@ -243,17 +253,6 @@ export class XMLHttpRequest extends XMLHttpRequestEventTarget {
 			agent
 		});
 		this._request = request;
-		
-		if (this.withCredentials) {
-			this._cookieJar = this._cookieJar || Cookie.CookieJar();
-			this._headers = {
-				...this._headers,
-				cookies: this._cookieJar
-					.getCookies(
-						Cookie.CookieAccess(this._url.hostname, this._url.pathname, this._url.protocol === 'https:')
-					).toValueString()
-			}; // TODO: is this how you set cookies?
-		}
 		
 		if (this.timeout) { request.setTimeout(this.timeout, () => this._onHttpTimeout(request)); }
 		request.on('response', response => this._onHttpResponse(request, response));
@@ -288,8 +287,8 @@ export class XMLHttpRequest extends XMLHttpRequestEventTarget {
 			}
 			delete this._headers['Content-Length'];
 			
-			if (response.headers['set-cookie'] && this._cookieJar) {
-				this._cookieJar.setCookies(response.headers['set-cookie']);
+			if (response.headers['set-cookie'] || response.headers['set-cookie2'] && this._cookieJar) {
+				this._cookieJar.setCookies(response.headers['set-cookie'] || response.headers['set-cookie2']);
 			}
 			
 			this.upload._reset();

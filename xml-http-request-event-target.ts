@@ -5,15 +5,15 @@ export type ProgressEventListenerObject = {handleEvent(event: ProgressEvent): vo
 export type ProgressEventListenerOrEventListenerObject = ProgressEventListener | ProgressEventListenerObject;
 
 export class XMLHttpRequestEventTarget {
-	onloadstart: ProgressEvent | null;
-	onprogress: ProgressEvent | null;
-	onabort: ProgressEvent | null;
-	onerror: ProgressEvent | null;
-	onload: ProgressEvent | null;
-	ontimeout: ProgressEvent | null;
-	onloadend: ProgressEvent | null;
+	onloadstart: ProgressEventListener | null;
+	onprogress: ProgressEventListener | null;
+	onabort: ProgressEventListener | null;
+	onerror: ProgressEventListener | null;
+	onload: ProgressEventListener | null;
+	ontimeout: ProgressEventListener | null;
+	onloadend: ProgressEventListener | null;
 	
-	private listeners: {[eventType: string]: ProgressEventListener[]};
+	private listeners: {[eventType: string]: ProgressEventListener[]} = {};
 	
 	addEventListener(eventType: string, listener?: ProgressEventListenerOrEventListenerObject) {
 		eventType = eventType.toLowerCase();

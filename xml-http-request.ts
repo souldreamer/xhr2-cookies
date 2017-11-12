@@ -401,7 +401,7 @@ export class XMLHttpRequest extends XMLHttpRequestEventTarget {
 	
 	private _parseResponseHeaders(response: IncomingMessage) {
 		this._responseHeaders = {};
-		for (let name of response.headers) {
+		for (let name in response.headers) {
 			const loweredName = name.toLowerCase();
 			if (this._privateHeaders[loweredName]) { continue; }
 			this._responseHeaders[loweredName] = response.headers[name];

@@ -31,7 +31,8 @@ export class XMLHttpRequest extends XMLHttpRequestEventTarget {
 	static HEADERS_RECEIVED = 2;
 	static LOADING = 3;
 	static DONE = 4;
-	
+	private static _cookieJar: any = Cookie.CookieJar();
+
 	onreadystatechange: ProgressEventListener | null = null;
 	readyState: number = XMLHttpRequest.UNSENT;
 	
@@ -65,9 +66,8 @@ export class XMLHttpRequest extends XMLHttpRequestEventTarget {
 	private _loadedBytes = 0;
 	private _totalBytes = 0;
 	private _lengthComputable = false;
-	private _cookieJar: any | null = null;
-	
-	private _restrictedMethods = {CONNECT: true, TRACE: true, TRACK: true};
+
+	private _restrictedMethods = { CONNECT: true, TRACE: true, TRACK: true };
 	private _restrictedHeaders = {
 		'accept-charset': true,
 		'accept-encoding': true,
@@ -232,8 +232,7 @@ export class XMLHttpRequest extends XMLHttpRequestEventTarget {
 	
 	private _sendHxxpRequest() {
 		if (this.withCredentials) {
-			this._cookieJar = this._cookieJar || Cookie.CookieJar();
-			const cookie = this._cookieJar
+			const cookie = XMLHttpRequest._cookieJar
 				.getCookies(
 					Cookie.CookieAccessInfo(this._url.hostname, this._url.pathname, this._url.protocol === 'https:')
 				).toValueString();
@@ -286,9 +285,9 @@ export class XMLHttpRequest extends XMLHttpRequestEventTarget {
 				delete this._headers['Content-Type'];
 			}
 			delete this._headers['Content-Length'];
-			
-			if (response.headers['set-cookie'] || response.headers['set-cookie2'] && this._cookieJar) {
-				this._cookieJar.setCookies(response.headers['set-cookie'] || response.headers['set-cookie2']);
+
+			if (response.headers['set-cookie'] || response.headers['set-cookie2'] && XMLHttpRequest._cookieJar) {
+				XMLHttpRequest._cookieJar.setCookies(response.headers['set-cookie'] || response.headers['set-cookie2']);
 			}
 			
 			this.upload._reset();
@@ -416,33 +415,33 @@ export class XMLHttpRequest extends XMLHttpRequestEventTarget {
 		this._responseParts = null;
 		
 		switch (this.responseType) {
-		case 'json':
-			this.responseText = null;
-			try {
-				this.response = JSON.parse(buffer.toString('utf-8'));
-			} catch {
-				this.response = null;
-			}
-			return;
-		case 'buffer':
-			this.responseText = null;
-			this.response = buffer;
-			return;
-		case 'arraybuffer':
-			this.responseText = null;
-			const arrayBuffer = new ArrayBuffer(buffer.length);
-			const view = new Uint8Array(arrayBuffer);
-			for (let i = 0; i < buffer.length; i++) { view[i] = buffer[i]; }
-			this.response = arrayBuffer;
-			return;
-		case 'text':
-		default:
-			try {
-				this.responseText = buffer.toString(this._parseResponseEncoding());
-			} catch {
-				this.responseText = buffer.toString('binary');
-			}
-			this.response = this.responseText;
+			case 'json':
+				this.responseText = null;
+				try {
+					this.response = JSON.parse(buffer.toString('utf-8'));
+				} catch (err) {
+					this.response = null;
+				}
+				return;
+			case 'buffer':
+				this.responseText = null;
+				this.response = buffer;
+				return;
+			case 'arraybuffer':
+				this.responseText = null;
+				const arrayBuffer = new ArrayBuffer(buffer.length);
+				const view = new Uint8Array(arrayBuffer);
+				for (let i = 0; i < buffer.length; i++) { view[i] = buffer[i]; }
+				this.response = arrayBuffer;
+				return;
+			case 'text':
+			default:
+				try {
+					this.responseText = buffer.toString(this._parseResponseEncoding());
+				} catch (err) {
+					this.responseText = buffer.toString('binary');
+				}
+				this.response = this.responseText;
 		}
 	}
 	

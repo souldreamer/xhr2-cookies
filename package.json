@@ -1,0 +1,26 @@
+{
+	"name": "xhr2-cookies",
+	"version": "0.9.0",
+	"author": "Ionut Costica <ionut.costica@gmail.com>",
+	"license": "MIT",
+	"description": "XMLHttpRequest polyfill for node.js",
+	"keywords": [
+		"XMLHttpRequest",
+		"Cookies",
+		"xhr2"
+	],
+	"main": "dist/index.js",
+	"types": "dist/index.d.ts",
+	"dependencies": {
+		"cookiejar": "^2.1.1"
+	},
+	"devDependencies": {
+		"@types/node": "^6",
+		"ts-loader": "^2.3.4",
+		"typescript": "^2.5.2",
+		"webpack": "^3.5.5"
+	},
+	"scripts": {
+		"prepare": "tsc"
+	}
+}

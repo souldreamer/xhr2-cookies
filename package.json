@@ -1,6 +1,6 @@
 {
 	"name": "xhr2-cookies",
-	"version": "0.9.0",
+	"version": "0.9.1",
 	"author": "Ionut Costica <ionut.costica@gmail.com>",
 	"license": "MIT",
 	"description": "XMLHttpRequest polyfill for node.js",

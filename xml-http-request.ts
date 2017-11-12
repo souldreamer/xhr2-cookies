@@ -248,7 +248,7 @@ export class XMLHttpRequest extends XMLHttpRequestEventTarget {
 			port: +this._url.port,
 			path: this._url.path,
 			auth: this._url.auth,
-			method: this._url.method,
+			method: this._method,
 			headers: this._headers,
 			agent
 		});
@@ -401,7 +401,7 @@ export class XMLHttpRequest extends XMLHttpRequestEventTarget {
 	
 	private _parseResponseHeaders(response: IncomingMessage) {
 		this._responseHeaders = {};
-		for (let name of response.headers) {
+		for (let name in response.headers) {
 			const loweredName = name.toLowerCase();
 			if (this._privateHeaders[loweredName]) { continue; }
 			this._responseHeaders[loweredName] = response.headers[name];

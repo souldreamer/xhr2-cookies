@@ -248,7 +248,7 @@ export class XMLHttpRequest extends XMLHttpRequestEventTarget {
 			port: +this._url.port,
 			path: this._url.path,
 			auth: this._url.auth,
-			method: this._url.method,
+			method: this.method,
 			headers: this._headers,
 			agent
 		});

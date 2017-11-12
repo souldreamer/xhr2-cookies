@@ -392,7 +392,9 @@ export class XMLHttpRequest extends XMLHttpRequestEventTarget {
 		xhrUrl.hash = null;
 		
 		const [xhrUser, xhrPassword] = (xhrUrl.auth || '').split(':');
-		xhrUrl.auth = `${user || xhrUser || ''}:${password || xhrPassword || ''}`;
+		if (xhrUser || xhrPassword || user || password) {
+			xhrUrl.auth = `${user || xhrUser || ''}:${password || xhrPassword || ''}`;
+		}
 		
 		return xhrUrl;
 	}

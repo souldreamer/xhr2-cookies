@@ -1,9 +1,10 @@
 {
 	"name": "xhr2-cookies",
-	"version": "0.9.1",
+	"version": "0.9.3",
 	"author": "Ionut Costica <ionut.costica@gmail.com>",
 	"license": "MIT",
 	"description": "XMLHttpRequest polyfill for node.js",
+	"repository": "git://github.com/souldreamer/xhr2-cookies.git",
 	"keywords": [
 		"XMLHttpRequest",
 		"Cookies",

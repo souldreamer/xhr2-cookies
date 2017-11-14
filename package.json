@@ -7,7 +7,7 @@
 	"repository": "git://github.com/souldreamer/xhr2-cookies.git",
 	"keywords": [
 		"XMLHttpRequest",
-		"Cookies",
+		"cookies",
 		"xhr2"
 	],
 	"main": "dist/index.js",
@@ -16,12 +16,33 @@
 		"cookiejar": "^2.1.1"
 	},
 	"devDependencies": {
+		"@types/body-parser": "^1.16.8",
+		"@types/cookie-parser": "^1.4.1",
+		"@types/express": "^4.0.39",
+		"@types/morgan": "^1.7.35",
 		"@types/node": "^6",
+		"ava": "^0.23.0",
+		"ava-ts": "^0.23.0",
+		"body-parser": "^1.18.2",
+		"cookie-parser": "^1.4.3",
+		"express": "^4.16.2",
+		"morgan": "^1.9.0",
 		"ts-loader": "^2.3.4",
+		"ts-node": "^3.3.0",
 		"typescript": "^2.5.2",
 		"webpack": "^3.5.5"
 	},
 	"scripts": {
-		"prepare": "tsc"
+		"prepare": "tsc",
+		"test": "tsc -p ./test && ava-ts -v"
+	},
+	"ava": {
+		"files": [
+			"test/*.spec.ts"
+		],
+		"source": [
+			"*.ts",
+			"!dist/**/*"
+		]
 	}
 }

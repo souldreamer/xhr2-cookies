@@ -32,6 +32,14 @@ export class XMLHttpRequest extends XMLHttpRequestEventTarget {
 	static LOADING = 3;
 	static DONE = 4;
 	
+	static cookieJar = Cookie.CookieJar();
+	
+	UNSENT = XMLHttpRequest.UNSENT;
+	OPENED = XMLHttpRequest.OPENED;
+	HEADERS_RECEIVED = XMLHttpRequest.HEADERS_RECEIVED;
+	LOADING = XMLHttpRequest.LOADING;
+	DONE = XMLHttpRequest.DONE;
+	
 	onreadystatechange: ProgressEventListener | null = null;
 	readyState: number = XMLHttpRequest.UNSENT;
 	
@@ -45,9 +53,9 @@ export class XMLHttpRequest extends XMLHttpRequestEventTarget {
 	responseUrl = '';
 	withCredentials = false;
 	
-	nodejsHttpAgent = http.globalAgent;
-	nodejsHttpsAgent = https.globalAgent;
-	nodejsBaseUrl: string | null = null;
+	nodejsHttpAgent: HttpsAgent;
+	nodejsHttpsAgent: HttpsAgent;
+	nodejsBaseUrl: string | null;
 	
 	private _anonymous: boolean;
 	private _method: string | null = null;
@@ -55,7 +63,7 @@ export class XMLHttpRequest extends XMLHttpRequestEventTarget {
 	private _sync = false;
 	private _headers: {[header: string]: string} = {};
 	private _loweredHeaders: {[lowercaseHeader: string]: string} = {};
-	private _mimeOverride = null; // TODO: type?
+	private _mimeOverride: string | null = null; // TODO: is type right?
 	private _request: ClientRequest | null = null;
 	private _response: IncomingMessage | null = null;
 	private _responseParts: Buffer[] | null = null;
@@ -65,7 +73,6 @@ export class XMLHttpRequest extends XMLHttpRequestEventTarget {
 	private _loadedBytes = 0;
 	private _totalBytes = 0;
 	private _lengthComputable = false;
-	private _cookieJar: any | null = null;
 	
 	private _restrictedMethods = {CONNECT: true, TRACE: true, TRACK: true};
 	private _restrictedHeaders = {
@@ -151,12 +158,13 @@ export class XMLHttpRequest extends XMLHttpRequestEventTarget {
 		if (this._request) { throw new XMLHttpRequest.InvalidStateError('send() already called'); }
 		
 		switch (this._url.protocol) {
-		case 'file:': return this._sendFile(data);
+		case 'file:':
+			return this._sendFile(data);
 		case 'http:':
 		case 'https:':
 			return this._sendHttp(data);
 		default:
-			throw new NetworkError(`Unsupported protocol ${this._url.protocol}`);
+			throw new XMLHttpRequest.NetworkError(`Unsupported protocol ${this._url.protocol}`);
 		}
 	}
 	
@@ -180,7 +188,7 @@ export class XMLHttpRequest extends XMLHttpRequestEventTarget {
 	
 	getAllResponseHeaders() {
 		if (this._responseHeaders == null) { return ''; }
-		Object.keys(this._responseHeaders).map(key => `${key}: ${this._responseHeaders[key]}`).join('\r\n');
+		return Object.keys(this._responseHeaders).map(key => `${key}: ${this._responseHeaders[key]}`).join('\r\n');
 	}
 	
 	overrideMimeType(mimeType: string) {
@@ -195,7 +203,7 @@ export class XMLHttpRequest extends XMLHttpRequestEventTarget {
 			if (options.baseUrl != null) {
 				const parsedUrl = url.parse(options.baseUrl, false, true);
 				if (!parsedUrl.protocol) {
-					throw new SyntaxError("baseUrl must be an absolute URL")
+					throw new XMLHttpRequest.SyntaxError("baseUrl must be an absolute URL")
 				}
 			}
 			this.nodejsBaseUrl = options.baseUrl;
@@ -232,8 +240,7 @@ export class XMLHttpRequest extends XMLHttpRequestEventTarget {
 	
 	private _sendHxxpRequest() {
 		if (this.withCredentials) {
-			this._cookieJar = this._cookieJar || Cookie.CookieJar();
-			const cookie = this._cookieJar
+			const cookie = XMLHttpRequest.cookieJar
 				.getCookies(
 					Cookie.CookieAccessInfo(this._url.hostname, this._url.pathname, this._url.protocol === 'https:')
 				).toValueString();
@@ -275,6 +282,12 @@ export class XMLHttpRequest extends XMLHttpRequestEventTarget {
 	
 	private _onHttpResponse(request: ClientRequest, response: IncomingMessage) {
 		if (this._request !== request) { return; }
+		
+		if (this.withCredentials && (response.headers['set-cookie'] || response.headers['set-cookie2'])) {
+			XMLHttpRequest.cookieJar
+				.setCookies(response.headers['set-cookie'] || response.headers['set-cookie2']);
+		}
+		
 		if ([301, 302, 303, 307, 308].indexOf(response.statusCode) >= 0) {
 			this._url = this._parseUrl(response.headers.location);
 			this._method = 'GET';
@@ -286,10 +299,6 @@ export class XMLHttpRequest extends XMLHttpRequestEventTarget {
 				delete this._headers['Content-Type'];
 			}
 			delete this._headers['Content-Length'];
-			
-			if (response.headers['set-cookie'] || response.headers['set-cookie2'] && this._cookieJar) {
-				this._cookieJar.setCookies(response.headers['set-cookie'] || response.headers['set-cookie2']);
-			}
 			
 			this.upload._reset();
 			this._finalizeHeaders();
@@ -307,7 +316,7 @@ export class XMLHttpRequest extends XMLHttpRequestEventTarget {
 		this.statusText = http.STATUS_CODES[this.status];
 		this._parseResponseHeaders(response);
 		
-		const lengthString = this._responseHeaders['content-length'];
+		const lengthString = this._responseHeaders['content-length'] || '';
 		this._totalBytes = +lengthString;
 		this._lengthComputable = !!lengthString;
 		
@@ -319,7 +328,10 @@ export class XMLHttpRequest extends XMLHttpRequestEventTarget {
 		
 		this._responseParts.push(new Buffer(data as any));
 		this._loadedBytes += data.length;
-		this.readyState = XMLHttpRequest.LOADING;
+		
+		if (this.readyState !== XMLHttpRequest.LOADING) {
+			this._setReadyState(XMLHttpRequest.LOADING);
+		}
 		
 		this._dispatchProgress('progress');
 	}
@@ -450,3 +462,7 @@ export class XMLHttpRequest extends XMLHttpRequestEventTarget {
 		return /;\s*charset=(.*)$/.exec(this._responseHeaders['content-type'] || '')[1] || 'utf-8';
 	}
 }
+
+XMLHttpRequest.prototype.nodejsHttpAgent = http.globalAgent;
+XMLHttpRequest.prototype.nodejsHttpsAgent = https.globalAgent;
+XMLHttpRequest.prototype.nodejsBaseUrl = null;

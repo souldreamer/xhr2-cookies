@@ -1,6 +1,7 @@
 import * as ava from 'ava';
 import { XMLHttpRequest } from '../xml-http-request';
 import { HttpServer } from './helpers/server';
+import { PNGArrayBuffer, PNGBuffer } from './helpers/png';
 
 function contextualize<T>(getContext: () => T): ava.RegisterContextual<T> {
 	ava.test.beforeEach(t => {
@@ -86,14 +87,13 @@ test('XMLHttpRequest #responseType arraybuffer reads a JSON file into an ArrayBu
 	});
 });
 
-test.todo('XMLHttpRequest #responseType arraybuffer reads a binary file into an ArrayBuffer');
-/*
-test.skip('XMLHttpRequest #responseType arraybuffer reads a binary file into an ArrayBuffer', async t => {
+test('XMLHttpRequest #responseType arraybuffer reads a binary file into an ArrayBuffer', async t => {
 	const xhr = t.context.xhr;
 	await new Promise(resolve => {
 		xhr.addEventListener('loadend', () => {
 			t.true(xhr.response instanceof ArrayBuffer);
 			if (!(xhr.response instanceof ArrayBuffer)) { return; }
+			t.deepEqual(xhr.response, PNGArrayBuffer);
 			resolve();
 		});
 		xhr.open('GET', t.context.imageUrl);
@@ -101,7 +101,6 @@ test.skip('XMLHttpRequest #responseType arraybuffer reads a binary file into an 
 		xhr.send();
 	});
 });
-*/
 
 test('XMLHttpRequest #responseType buffer reads a JSON file into a node.js Buffer', async t => {
 	const xhr = t.context.xhr;
@@ -119,14 +118,13 @@ test('XMLHttpRequest #responseType buffer reads a JSON file into a node.js Buffe
 	});
 });
 
-test.todo('XMLHttpRequest #responseType buffer reads a binary file into a node.js Buffer');
-/*
-test.skip('XMLHttpRequest #responseType buffer reads a binary file into a node.js Buffer', async t => {
+test('XMLHttpRequest #responseType buffer reads a binary file into a node.js Buffer', async t => {
 	const xhr = t.context.xhr;
 	await new Promise(resolve => {
 		xhr.addEventListener('loadend', () => {
-			t.true(xhr.response instanceof ArrayBuffer);
-			if (!(xhr.response instanceof ArrayBuffer)) { return; }
+			t.true(xhr.response instanceof Buffer);
+			if (!(xhr.response instanceof Buffer)) { return; }
+			t.deepEqual(xhr.response, PNGBuffer);
 			resolve();
 		});
 		xhr.open('GET', t.context.imageUrl);
@@ -134,4 +132,3 @@ test.skip('XMLHttpRequest #responseType buffer reads a binary file into a node.j
 		xhr.send();
 	});
 });
-*/

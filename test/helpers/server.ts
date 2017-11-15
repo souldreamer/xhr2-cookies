@@ -196,7 +196,7 @@ export class XhrServer {
 			}
 		});
 		
-		this.app.use(express.static(path.join(__dirname, './test/helpers/')));
+		this.app.use(express.static(path.join(__dirname, '../../')));
 		
 		this.createServer();
 	}

@@ -153,7 +153,7 @@ export class XMLHttpRequest extends XMLHttpRequestEventTarget {
 		}
 	}
 	
-	send(data?: string | ArrayBuffer) {
+	send(data?: string | Buffer | ArrayBuffer | ArrayBufferView) {
 		if (this.readyState !== XMLHttpRequest.OPENED) { throw new XMLHttpRequest.InvalidStateError('XHR readyState must be OPENED'); }
 		if (this._request) { throw new XMLHttpRequest.InvalidStateError('send() already called'); }
 		
@@ -224,7 +224,7 @@ export class XMLHttpRequest extends XMLHttpRequestEventTarget {
 		throw new Error('Protocol file: not implemented');
 	}
 	
-	private _sendHttp(data?: string | ArrayBuffer) {
+	private _sendHttp(data?: string | Buffer | ArrayBuffer | ArrayBufferView) {
 		if (this._sync) { throw new Error('Synchronous XHR processing not implemented'); }
 		if (data && (this._method === 'GET' || this._method === 'HEAD')) {
 			console.warn(`Discarding entity body for ${this._method} requests`);

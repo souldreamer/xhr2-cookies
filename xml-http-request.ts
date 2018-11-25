@@ -99,8 +99,7 @@ export class XMLHttpRequest extends XMLHttpRequestEventTarget {
 		via: true
 	};
 	private _privateHeaders = {'set-cookie': true, 'set-cookie2': true};
-	private _userAgent = `Mozilla/5.0 (${os.type()} ${os.arch()}) node.js/${process.versions.node} v8/${process.versions.v8}`;
-	
+	private _userAgent = `Mozilla/5.0 (${os.type()} ${os.arch()}) ${'versions' in process ? `node.js/${process.versions.node} v8/${process.versions.v8}` : ''}`;
 	constructor(options: XMLHttpRequestOptions = {}) {
 		super();
 		this._anonymous = options.anon || false;

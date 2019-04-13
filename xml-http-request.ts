@@ -459,7 +459,9 @@ export class XMLHttpRequest extends XMLHttpRequestEventTarget {
 	}
 	
 	private _parseResponseEncoding() {
-		return /;\s*charset=(.*)$/.exec(this._responseHeaders['content-type'] || '')[1] || 'utf-8';
+		var hdr = this._responseHeaders['content-type'] || '';
+		var ret = /;\s*charset=(.*)$/.exec(hdr);
+		return Array.isArray(ret) ? ret[1] : 'utf-8';
 	}
 }
 

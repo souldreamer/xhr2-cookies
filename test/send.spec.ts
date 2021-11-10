@@ -101,7 +101,7 @@ test('XMLHttpRequest #send works with ArrayBuffers', async t => {
 
 test('XMLHttpRequest #send works with node.js Buffers', async t => {
 	const xhr = t.context.xhr;
-	const buffer = new Buffer(PNGUint8Array.length);
+	const buffer = Buffer.alloc(PNGUint8Array.length);
 	for (let i = 0; i < PNGUint8Array.length; i++) { buffer.writeUInt8(PNGUint8Array[i], i); }
 	t.plan(2);
 	

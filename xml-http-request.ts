@@ -326,7 +326,7 @@ export class XMLHttpRequest extends XMLHttpRequestEventTarget {
 	private _onHttpResponseData(response: IncomingMessage, data: string | Buffer) {
 		if (this._response !== response) { return; }
 		
-		this._responseParts.push(new Buffer(data as any));
+		this._responseParts.push(Buffer.from(data as any));
 		this._loadedBytes += data.length;
 		
 		if (this.readyState !== XMLHttpRequest.LOADING) {

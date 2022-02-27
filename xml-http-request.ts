@@ -1,6 +1,5 @@
 import * as http from 'http';
 import * as https from 'https';
-import * as os from 'os';
 import * as url from 'url';
 import { ProgressEvent } from './progress-event';
 import { InvalidStateError, NetworkError, SecurityError, SyntaxError } from './errors';
@@ -25,24 +24,24 @@ export class XMLHttpRequest extends XMLHttpRequestEventTarget {
 	static SecurityError = SecurityError;
 	static SyntaxError = SyntaxError;
 	static XMLHttpRequestUpload = XMLHttpRequestUpload;
-	
+
 	static UNSENT = 0;
 	static OPENED = 1;
 	static HEADERS_RECEIVED = 2;
 	static LOADING = 3;
 	static DONE = 4;
-	
+
 	static cookieJar = Cookie.CookieJar();
-	
+
 	UNSENT = XMLHttpRequest.UNSENT;
 	OPENED = XMLHttpRequest.OPENED;
 	HEADERS_RECEIVED = XMLHttpRequest.HEADERS_RECEIVED;
 	LOADING = XMLHttpRequest.LOADING;
 	DONE = XMLHttpRequest.DONE;
-	
+
 	onreadystatechange: ProgressEventListener | null = null;
 	readyState: number = XMLHttpRequest.UNSENT;
-	
+
 	response: string | ArrayBuffer | Buffer | object | null = null;
 	responseText = '';
 	responseType = '';
@@ -52,11 +51,11 @@ export class XMLHttpRequest extends XMLHttpRequestEventTarget {
 	upload = new XMLHttpRequestUpload();
 	responseUrl = '';
 	withCredentials = false;
-	
+
 	nodejsHttpAgent: HttpsAgent;
 	nodejsHttpsAgent: HttpsAgent;
 	nodejsBaseUrl: string | null;
-	
+
 	private _anonymous: boolean;
 	private _method: string | null = null;
 	private _url: XHRUrl | null = null;
@@ -73,7 +72,7 @@ export class XMLHttpRequest extends XMLHttpRequestEventTarget {
 	private _loadedBytes = 0;
 	private _totalBytes = 0;
 	private _lengthComputable = false;
-	
+
 	private _restrictedMethods = {CONNECT: true, TRACE: true, TRACK: true};
 	private _restrictedHeaders = {
 		'accept-charset': true,
@@ -95,27 +94,26 @@ export class XMLHttpRequest extends XMLHttpRequestEventTarget {
 		trailer: true,
 		'transfer-encoding': true,
 		upgrade: true,
-		'user-agent': true,
 		via: true
 	};
 	private _privateHeaders = {'set-cookie': true, 'set-cookie2': true};
-	private _userAgent = `Mozilla/5.0 (${os.type()} ${os.arch()}) node.js/${process.versions.node} v8/${process.versions.v8}`;
-	
+	private _userAgent = `-`;
+
 	constructor(options: XMLHttpRequestOptions = {}) {
 		super();
 		this._anonymous = options.anon || false;
 	}
-	
+
 	open(method: string, url: string, async = true, user?: string, password?: string) {
 		method = method.toUpperCase();
 		if (this._restrictedMethods[method]) { throw new XMLHttpRequest.SecurityError(`HTTP method ${method} is not allowed in XHR`)};
-		
+
 		const xhrUrl = this._parseUrl(url, user, password);
-		
+
 		if (this.readyState === XMLHttpRequest.HEADERS_RECEIVED || this.readyState === XMLHttpRequest.LOADING) {
 			// TODO(pwnall): terminate abort(), terminate send()
 		}
-		
+
 		this._method = method;
 		this._url = xhrUrl;
 		this._sync = !async;
@@ -133,16 +131,16 @@ export class XMLHttpRequest extends XMLHttpRequestEventTarget {
 		this._totalBytes = 0;
 		this._lengthComputable = false;
 	}
-	
+
 	setRequestHeader(name: string, value: any) {
 		if (this.readyState !== XMLHttpRequest.OPENED) { throw new XMLHttpRequest.InvalidStateError('XHR readyState must be OPENED'); }
-		
+
 		const loweredName = name.toLowerCase();
 		if (this._restrictedHeaders[loweredName] || /^sec-/.test(loweredName) || /^proxy-/.test(loweredName)) {
 			console.warn(`Refused to set unsafe header "${name}"`);
 			return;
 		}
-		
+
 		value = value.toString();
 		if (this._loweredHeaders[loweredName] != null) {
 			name = this._loweredHeaders[loweredName];
@@ -152,11 +150,11 @@ export class XMLHttpRequest extends XMLHttpRequestEventTarget {
 			this._headers[name] = value;
 		}
 	}
-	
+
 	send(data?: string | Buffer | ArrayBuffer | ArrayBufferView) {
 		if (this.readyState !== XMLHttpRequest.OPENED) { throw new XMLHttpRequest.InvalidStateError('XHR readyState must be OPENED'); }
 		if (this._request) { throw new XMLHttpRequest.InvalidStateError('send() already called'); }
-		
+
 		switch (this._url.protocol) {
 		case 'file:':
 			return this._sendFile(data);
@@ -167,17 +165,17 @@ export class XMLHttpRequest extends XMLHttpRequestEventTarget {
 			throw new XMLHttpRequest.NetworkError(`Unsupported protocol ${this._url.protocol}`);
 		}
 	}
-	
+
 	abort() {
 		if (this._request == null) { return; }
-		
+
 		this._request.abort();
 		this._setError();
-		
+
 		this._dispatchProgress('abort');
 		this._dispatchProgress('loadend');
 	}
-	
+
 	getResponseHeader(name: string) {
 		if (this._responseHeaders == null || name == null) { return null; }
 		const loweredName = name.toLowerCase();
@@ -185,17 +183,17 @@ export class XMLHttpRequest extends XMLHttpRequestEventTarget {
 			? this._responseHeaders[name.toLowerCase()]
 			: null;
 	}
-	
+
 	getAllResponseHeaders() {
 		if (this._responseHeaders == null) { return ''; }
 		return Object.keys(this._responseHeaders).map(key => `${key}: ${this._responseHeaders[key]}`).join('\r\n');
 	}
-	
+
 	overrideMimeType(mimeType: string) {
 		if (this.readyState === XMLHttpRequest.LOADING || this.readyState === XMLHttpRequest.DONE) { throw new XMLHttpRequest.InvalidStateError('overrideMimeType() not allowed in LOADING or DONE'); }
 		this._mimeOverride = mimeType.toLowerCase();
 	}
-	
+
 	nodejsSet(options: {httpAgent?: HttpAgent, httpsAgent?: HttpsAgent, baseUrl?: string }) {
 		this.nodejsHttpAgent = options.httpAgent || this.nodejsHttpAgent;
 		this.nodejsHttpsAgent = options.httpsAgent || this.nodejsHttpsAgent;
@@ -209,21 +207,21 @@ export class XMLHttpRequest extends XMLHttpRequestEventTarget {
 			this.nodejsBaseUrl = options.baseUrl;
 		}
 	}
-	
+
 	static nodejsSet(options: {httpAgent?: HttpAgent, httpsAgent?: HttpsAgent, baseUrl?: string }) {
 		XMLHttpRequest.prototype.nodejsSet(options);
 	}
-	
+
 	private _setReadyState(readyState: number) {
 		this.readyState = readyState;
 		this.dispatchEvent(new ProgressEvent('readystatechange'));
 	}
-	
+
 	private _sendFile(data: any) {
 		// TODO
 		throw new Error('Protocol file: not implemented');
 	}
-	
+
 	private _sendHttp(data?: string | Buffer | ArrayBuffer | ArrayBufferView) {
 		if (this._sync) { throw new Error('Synchronous XHR processing not implemented'); }
 		if (data && (this._method === 'GET' || this._method === 'HEAD')) {
@@ -232,22 +230,22 @@ export class XMLHttpRequest extends XMLHttpRequestEventTarget {
 		} else {
 			data = data || '';
 		}
-		
+
 		this.upload._setData(data);
 		this._finalizeHeaders();
 		this._sendHxxpRequest();
 	}
-	
+
 	private _sendHxxpRequest() {
 		if (this.withCredentials) {
 			const cookie = XMLHttpRequest.cookieJar
 				.getCookies(
 					Cookie.CookieAccessInfo(this._url.hostname, this._url.pathname, this._url.protocol === 'https:')
 				).toValueString();
-			
+
 			this._headers.cookie = this._headers.cookie2 = cookie;
 		}
-		
+
 		const [hxxp, agent] = this._url.protocol === 'http:' ? [http, this.nodejsHttpAgent] : [https, this.nodejsHttpsAgent];
 		const requestMethod: (options: RequestOptionsHttp) => ClientRequest = hxxp.request.bind(hxxp);
 		const request = requestMethod({
@@ -260,34 +258,36 @@ export class XMLHttpRequest extends XMLHttpRequestEventTarget {
 			agent
 		});
 		this._request = request;
-		
+
 		if (this.timeout) { request.setTimeout(this.timeout, () => this._onHttpTimeout(request)); }
 		request.on('response', response => this._onHttpResponse(request, response));
 		request.on('error', error => this._onHttpRequestError(request, error));
 		this.upload._startUpload(request);
-		
+
 		if (this._request === request) { this._dispatchProgress('loadstart'); }
 	}
-	
+
 	private _finalizeHeaders() {
+		if (!this._headers['User-Agent']) {
+			this._headers['User-Agent'] = this._userAgent;
+		}
 		this._headers = {
 			...this._headers,
 			Connection: 'keep-alive',
 			Host: this._url.host,
-			'User-Agent': this._userAgent,
 			...this._anonymous ? {Referer: 'about:blank'} : {}
 		};
 		this.upload._finalizeHeaders(this._headers, this._loweredHeaders);
 	}
-	
+
 	private _onHttpResponse(request: ClientRequest, response: IncomingMessage) {
 		if (this._request !== request) { return; }
-		
+
 		if (this.withCredentials && (response.headers['set-cookie'] || response.headers['set-cookie2'])) {
 			XMLHttpRequest.cookieJar
 				.setCookies(response.headers['set-cookie'] || response.headers['set-cookie2']);
 		}
-		
+
 		if ([301, 302, 303, 307, 308].indexOf(response.statusCode) >= 0) {
 			this._url = this._parseUrl(response.headers.location);
 			this._method = 'GET';
@@ -299,89 +299,89 @@ export class XMLHttpRequest extends XMLHttpRequestEventTarget {
 				delete this._headers['Content-Type'];
 			}
 			delete this._headers['Content-Length'];
-			
+
 			this.upload._reset();
 			this._finalizeHeaders();
 			this._sendHxxpRequest();
 			return;
 		}
-		
+
 		this._response = response;
 		this._response.on('data', data => this._onHttpResponseData(response, data));
 		this._response.on('end', () => this._onHttpResponseEnd(response));
 		this._response.on('close', () => this._onHttpResponseClose(response));
-		
+
 		this.responseUrl = this._url.href.split('#')[0];
 		this.status = response.statusCode;
 		this.statusText = http.STATUS_CODES[this.status];
 		this._parseResponseHeaders(response);
-		
+
 		const lengthString = this._responseHeaders['content-length'] || '';
 		this._totalBytes = +lengthString;
 		this._lengthComputable = !!lengthString;
-		
+
 		this._setReadyState(XMLHttpRequest.HEADERS_RECEIVED);
 	}
-	
+
 	private _onHttpResponseData(response: IncomingMessage, data: string | Buffer) {
 		if (this._response !== response) { return; }
-		
+
 		this._responseParts.push(new Buffer(data as any));
 		this._loadedBytes += data.length;
-		
+
 		if (this.readyState !== XMLHttpRequest.LOADING) {
 			this._setReadyState(XMLHttpRequest.LOADING);
 		}
-		
+
 		this._dispatchProgress('progress');
 	}
-	
+
 	private _onHttpResponseEnd(response: IncomingMessage) {
 		if (this._response !== response) { return; }
-		
+
 		this._parseResponse();
 		this._request = null;
 		this._response = null;
 		this._setReadyState(XMLHttpRequest.DONE);
-		
+
 		this._dispatchProgress('load');
 		this._dispatchProgress('loadend');
 	}
-	
+
 	private _onHttpResponseClose(response: IncomingMessage) {
 		if (this._response !== response) { return; }
-		
+
 		const request = this._request;
 		this._setError();
 		request.abort();
 		this._setReadyState(XMLHttpRequest.DONE);
-		
+
 		this._dispatchProgress('error');
 		this._dispatchProgress('loadend');
 	}
-	
+
 	private _onHttpTimeout(request: ClientRequest) {
 		if (this._request !== request) { return; }
-		
+
 		this._setError();
 		request.abort();
 		this._setReadyState(XMLHttpRequest.DONE);
-		
+
 		this._dispatchProgress('timeout');
 		this._dispatchProgress('loadend');
 	}
-	
+
 	private _onHttpRequestError(request: ClientRequest, error: Error) {
 		if (this._request !== request) { return; }
-		
+
 		this._setError();
 		request.abort();
 		this._setReadyState(XMLHttpRequest.DONE);
-		
+
 		this._dispatchProgress('error');
 		this._dispatchProgress('loadend');
 	}
-	
+
 	private _dispatchProgress(eventType: string) {
 		const event = new XMLHttpRequest.ProgressEvent(eventType);
 		event.lengthComputable = this._lengthComputable;
@@ -389,28 +389,28 @@ export class XMLHttpRequest extends XMLHttpRequestEventTarget {
 		event.total = this._totalBytes;
 		this.dispatchEvent(event);
 	}
-	
+
 	private _setError() {
 		this._request = null;
 		this._response = null;
 		this._responseHeaders = null;
 		this._responseParts = null;
 	}
-	
+
 	private _parseUrl(urlString: string, user?: string, password?: string) {
 		const absoluteUrl = this.nodejsBaseUrl == null ? urlString : url.resolve(this.nodejsBaseUrl, urlString);
 		const xhrUrl: XHRUrl = url.parse(absoluteUrl, false, true);
-		
+
 		xhrUrl.hash = null;
-		
+
 		const [xhrUser, xhrPassword] = (xhrUrl.auth || '').split(':');
 		if (xhrUser || xhrPassword || user || password) {
 			xhrUrl.auth = `${user || xhrUser || ''}:${password || xhrPassword || ''}`;
 		}
-		
+
 		return xhrUrl;
 	}
-	
+
 	private _parseResponseHeaders(response: IncomingMessage) {
 		this._responseHeaders = {};
 		for (let name in response.headers) {
@@ -422,11 +422,11 @@ export class XMLHttpRequest extends XMLHttpRequestEventTarget {
 			this._responseHeaders['content-type'] = this._mimeOverride;
 		}
 	}
-	
+
 	private _parseResponse() {
 		const buffer = Buffer.concat(this._responseParts);
 		this._responseParts = null;
-		
+
 		switch (this.responseType) {
 		case 'json':
 			this.responseText = null;
@@ -457,7 +457,7 @@ export class XMLHttpRequest extends XMLHttpRequestEventTarget {
 			this.response = this.responseText;
 		}
 	}
-	
+
 	private _parseResponseEncoding() {
 		return /;\s*charset=(.*)$/.exec(this._responseHeaders['content-type'] || '')[1] || 'utf-8';
 	}

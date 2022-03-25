@@ -373,7 +373,8 @@ export class XMLHttpRequest extends XMLHttpRequestEventTarget {
 	
 	private _onHttpRequestError(request: ClientRequest, error: Error) {
 		if (this._request !== request) { return; }
-		
+
+		this._error = error;
 		this._setError();
 		request.abort();
 		this._setReadyState(XMLHttpRequest.DONE);
